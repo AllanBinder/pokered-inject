@@ -1,0 +1,85 @@
+{
+  "name": "POTASH",
+  "category": "KILN",
+  "types": [
+    "FIRE",
+    "FIRE"
+  ],
+  "stats": {
+    "hp": 70,
+    "atk": 55,
+    "def": 85,
+    "spd": 35,
+    "spc": 65
+  },
+  "catch_rate": 90,
+  "base_exp": 88,
+  "growth": "MEDIUM_SLOW",
+  "moves": {
+    "level1": [
+      "EMBER",
+      "HARDEN"
+    ],
+    "learnset": {
+      "9": "SMOKESCREEN",
+      "16": "ROCK_THROW",
+      "24": "FLAMETHROWER",
+      "33": "SELFDESTRUCT",
+      "42": "FIRE_BLAST"
+    },
+    "tmhm": [
+      "TOXIC",
+      "BODY_SLAM",
+      "TAKE_DOWN",
+      "DOUBLE_EDGE",
+      "RAGE",
+      "FIRE_BLAST",
+      "MIMIC",
+      "DOUBLE_TEAM",
+      "REFLECT",
+      "BIDE",
+      "SELFDESTRUCT",
+      "REST",
+      "SUBSTITUTE",
+      "EXPLOSION",
+      "STRENGTH"
+    ]
+  },
+  "evolution": null,
+  "dex": {
+    "height_ft": 2,
+    "height_in": 4,
+    "weight_lb": 61.0,
+    "text": "A clay kiln that came alive. A fire has burned in its belly for a century. It will not let it die."
+  },
+  "cry": {
+    "base": "CRY_18",
+    "pitch": 32,
+    "length": 200
+  },
+  "palette": "PAL_BROWNMON",
+  "icon": "ICON_MON",
+  "sprites": {
+    "front": "front.png",
+    "back": "back.png"
+  },
+  "wild": [
+    {
+      "map": "Route16",
+      "kind": "grass",
+      "slots": [
+        3,
+        6
+      ],
+      "level": 20
+    },
+    {
+      "map": "Route16",
+      "kind": "grass",
+      "slots": [
+        8
+      ],
+      "level": 24
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+build/
+out/
+candidates/
+processed/
+picksheet*.html
+*.gbc
+*.gb
+*.sav
+*.state
+__pycache__/
+.env
+.DS_Store
