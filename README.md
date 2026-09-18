@@ -15,6 +15,9 @@ python3 inject.py examples/potash/mon.json --game blue
 # -> out/potash_blue.gbc
 ```
 
+New here? [GUIDE.md](GUIDE.md) is the step by step walkthrough, from a fresh clone to
+catching your species in the grass.
+
 ## Requirements
 
 - Python 3.8 or newer. `inject.py` uses the standard library only, nothing to pip install.
