@@ -166,10 +166,14 @@ than on line numbers so repeated runs stack:
   Pokedex number.
 - `gfx/pokemon/front/<name>.png` and `gfx/pokemon/back/<name>b.png`: your sprites. The Makefile
   turns them into `.2bpp` and then into the game's compressed `.pic` format on its own.
-- `gfx/pics.asm` and `home/pics.asm`: sprites go into their own floating section, because every
-  retail pic bank has under 400 bytes of room left. The game picks a sprite's bank from the
-  species index, so the injector adds one index special case (7 bytes of bank 0) next to the
-  ones the game already has for Mew and the fossil pics.
+- `gfx/pics.asm`, `home/pics.asm` and `home.asm`: sprites go into their own floating section,
+  because every retail pic bank has under 400 bytes of room left. The game picks a sprite's bank
+  from the species index, so the injector needs one more index check next to the ones the game
+  has for Mew and the fossil pics. It does this without moving a byte of bank 0: the 7 byte Mew
+  check becomes a jump to a small routine in bank 0's free space, and that routine does the Mew
+  check plus one per injected species. Bank 0 has to keep its retail layout because a save file
+  stores pointers into it (the tileset collision table for one); a shifted bank 0 leaves a save
+  made on retail with the player walking in place against invisible walls.
 - `data/wild/maps/<Map>.asm`: the encounter slots you asked for.
 
 Two details worth knowing if you go reading the diff. `BaseStats` in retail stops at Pokedex
@@ -193,9 +197,12 @@ nothing you can see in game. Set `species_const` yourself if you want a differen
 - Trading or link battling with an unpatched cartridge shows your species as MissingNo on the
   other side. Both players need the same ROM.
 - Every added species costs about 50 bytes in the bank that holds the base stats and evolution
-  data, 7 bytes of bank 0, and the size of its two sprites in a spare bank. There is room for
-  roughly a dozen before bank 0 runs out; after that, `make` fails with a section overflow
-  instead of building something broken.
+  data, 7 bytes of bank 0's free space (about 90 bytes in retail), and the size of its two
+  sprites in a spare bank. There is room for roughly ten before bank 0 runs out; after that,
+  `make` fails with a section overflow instead of building something broken.
+- Saves made on the retail ROM keep working after injection: bank 0 and every map and tileset
+  bank keep their retail layout. The banks that do shift hold base stats, evolutions, trainer
+  data and Pokedex text, and nothing in a save points into those.
 - `--replace SPECIES` swaps a real species in place and keeps its Pokedex number, so saves stay
   compatible. Mew cannot be replaced (its data lives outside the main table).
 

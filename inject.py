@@ -602,7 +602,7 @@ class Mon:
         # An earlier run of this same spec leaves its pic labels behind, which is
         # how a re-run tells itself apart from a name that collides with a real
         # species.
-        already_injected = ("BANK(%sPicFront)" % self.label) in pk.tree.text("home/pics.asm")
+        already_injected = ("BANK(%sPicFront)" % self.label) in pk.tree.text("home.asm")
         if not replace and self.const in pk.species_by_name and not already_injected:
             raise InjectError(
                 "%s is already a species in pokered. Use --replace %s to overwrite it, or "
@@ -970,17 +970,54 @@ def patch_pics(tree, mon):
         ]
         tree.append_block(rel, block, why="floating pic section (no retail Pics bank has room)")
 
-    # Teach the index based bank picker about the new species.
+    # Teach the index based bank picker about the new species without moving a
+    # single byte of the home bank. A save file carries pointers into ROM0 (the
+    # tileset collision table for one, refreshed only on a map change), so a home
+    # bank that shifts by even a byte strands a save made on retail: the player
+    # walks in place and every tile reads as a wall. The 7 byte Mew check turns
+    # into a 3 byte jp plus 4 nops, and the checks (Mew's included) move to a
+    # routine in ROM0's free space.
     rel = "home/pics.asm"
     lines = tree.lines(rel)
-    if not any("BANK(%sPicFront)" % mon.label in line for line in lines):
-        anchor = tree.find(rel, r"^\tcp FOSSIL_KABUTOPS", "the pic bank special cases")
-        tree.insert(rel, anchor - 1, [
-            "\tld a, b",
+    hook = "\tjp InjectedPicBank ; injected: replaces the 7 byte Mew check, keeps the ROM0 layout"
+    if hook not in lines:
+        i = tree.find(rel, r"^\tcp MEW$", "the Mew pic bank check")
+        expect = ["\tcp MEW", "\tld a, BANK(MewPicFront)", "\tjr z, .GotBank", "\tld a, b"]
+        if lines[i:i + 4] != expect:
+            raise InjectError(
+                "home/pics.asm has changed shape around the Mew pic bank check; the injector "
+                "expected the retail pokered sequence. Update the pokered submodule or the "
+                "injector."
+            )
+        lines[i:i + 4] = [hook, "\tnop", "\tnop", "\tnop", "\tnop", ".afterInjected"]
+        tree.note("edit", "%s:%d" % (rel, i + 1), "size neutral pic bank hook (ROM0 layout unchanged)")
+
+    rel = "home.asm"
+    lines = tree.lines(rel)
+    tail = "\tjp UncompressMonSprite.afterInjected"
+    if "InjectedPicBank::" not in lines:
+        tree.append_block(rel, [
+            '; Added by pokered-inject. Lives in ROM0 free space, after everything',
+            '; retail placed there, so no retail address moves.',
+            'SECTION "Injected Pic Bank", ROM0',
+            '',
+            'InjectedPicBank::',
+            '\tcp MEW',
+            '\tld a, BANK(MewPicFront)',
+            '\tjp z, UncompressMonSprite.GotBank',
+            '\tld a, b',
+            tail,
+        ], why="pic bank routine in ROM0 free space")
+        lines = tree.lines(rel)
+    marker = "\tld a, BANK(%sPicFront)" % mon.label
+    if marker not in lines:
+        j = lines.index(tail)
+        tree.insert(rel, j, [
             "\tcp %s ; injected: %s" % (mon.const, mon.name),
-            "\tld a, BANK(%sPicFront)" % mon.label,
-            "\tjr z, .GotBank",
-        ], why="pic bank special case (7 bytes of ROM0)")
+            marker,
+            "\tjp z, UncompressMonSprite.GotBank",
+            "\tld a, b",
+        ], why="pic bank special case for %s" % mon.name)
 
 
 def patch_wild(tree, mon, games):
